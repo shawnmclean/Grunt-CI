@@ -1,0 +1,96 @@
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\BuildProcess.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\BuildProcess.pdb
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\System.Web.Http.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\System.Web.Http.xml
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+C:\Microsoft practice\TFS\Shalini\Gradletask\GradleBuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\BuildProcess.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\System.Web.Http.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\System.Web.Http.xml
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+C:\Thiru\GradleBuildRepo\GradleBuildTemplate\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\BuildProcess.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Web.Http.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.xml
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Web.Http.xml
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+E:\MS Project Gradle\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\BuildProcess.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Web.Http.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.xml
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\System.Web.Http.xml
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+E:\MS Project Grunt\grunt-jenkins-gradle\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\BuildProcess.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\BuildProcess.pdb
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\System.Web.Http.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\Newtonsoft.Json.xml
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\System.Web.Http.xml
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+E:\MS Project Grunt\GitGruntTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\BuildProcess.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\System.Web.Http.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.xml
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\System.Web.Http.xml
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csprojResolveAssemblyReference.cache
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\BuildProcess.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\Microsoft.TeamFoundation.WorkItemTracking.Client.DataStoreLoader.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\System.Web.Http.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\System.Net.Http.Formatting.xml
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\System.Web.Http.xml
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\Microsoft.WITDataStore.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.CustomEditors.PasswordDialog.resources
+C:\Thiru Grunt\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
+C:\Thiru Grunt\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
+C:\Thiru Grunt\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb

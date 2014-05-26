@@ -1,0 +1,22 @@
+{
+  "name": "SampleNodeWebApp",
+  "version": "0.0.0",
+  "description": "SampleNodeWebApp",
+  "main": "app.js",
+  "author": {
+    "name": "thirugnanam.vk",
+    "email": ""
+  },
+  "dependencies": {
+    "express": "3.4.4",
+    "jade": "*",
+    "stylus": "*"
+  },
+  "devDependencies": {
+    "coffee-script": "~1.6.3",
+    "grunt": "~0.4.0",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-jade": "^0.11.0",
+    "grunt-contrib-less": "^0.11.0"
+  }
+}
