@@ -1,3 +1,17 @@
+<#
+-------------------------------------------------------------------------
+ Copyright 2013 Microsoft Open Technologies, Inc.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at 
+   http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+--------------------------------------------------------------------------
+#> 
 #!/bin/bash
 
 # Redirect stdout ( > ) and stderr ( 2> ) to a log file under user's home directory
@@ -194,7 +208,7 @@ function identifyOS() {
     fi
 }
 
-
+#PreScript
 
 # Install the Azure xplat-cli if it is not already installed. This is required to execute the 
 # Azure Storage download commands
@@ -226,6 +240,10 @@ destinationPath=(`echo "$destination" | awk -F "/$destinationDir" '{if (NF > 1) 
 # Restore the original TFS
 IFS=$originalIFS
 
+echo "----------------------------"
+echo $destinationPath
+echo "----------------------------"
+
 # Change directory to the destination directory
 if [ ! -z "$destinationPath" ]
 then
@@ -239,3 +257,5 @@ do
     # Blob name and Destination Path should be enclosed in quotes as spaces may exist in the name
     azure storage blob download --account-name $storageAccountName --account-key $storageAccountKey --container $containerName --blob "$blob" --destination "$destinationDir"  --quiet
 done
+
+#PostScript

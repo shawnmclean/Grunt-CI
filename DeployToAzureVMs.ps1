@@ -1,4 +1,17 @@
-
+<#
+-------------------------------------------------------------------------
+ Copyright 2013 Microsoft Open Technologies, Inc.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at 
+   http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+--------------------------------------------------------------------------
+#>
 <#
 .SYNOPSIS
     Gets the details of all the VMs present in a Cloud Service and deploys the Build
@@ -121,8 +134,6 @@ Try
     $DefaultSSHPort = "22"
     $WindowsDownloadScript =  $deploymentScriptsDir + "\DownloadBuildBinariesFromAzureStorage.ps1"
     $LinuxDownloadScript =  $deploymentScriptsDir + "\DownloadBuildBinariesFromAzureStorage.sh"
-   #echo "deploymentScriptsDir"
-   #echo $deploymentScriptsDir
     $cloudServieDNS = $CloudServiceName + ".cloudapp.net"
    
     $WinPassword = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($WinPassword))
@@ -144,8 +155,10 @@ Try
 
     #Import the Azure Management Certificate (Can be a path for which build agent service account should be accessible, by default it runs under service account)
     $logFileContent = $logFileContent + "Importing the Azure Management Certificate...... `n"
+   
     $certToImport = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $AzureManagementCertificate
     ImportCertificate $certToImport
+    
     $logFileContent = $logFileContent + "......Imported the Azure Management Certificate `n"
     $mgmtCertThumbprint = $certToImport.Thumbprint
 
@@ -195,33 +208,30 @@ Try
             else
             {
                 $logFileContent = $logFileContent + "Remotely triggering the download script on the VM `n"
+            
             #-InDisconnectedSession
-            <#--echo "BlobNamePrefix:$BlobNamePrefix"
-            echo "cloudServieDNS: $cloudServieDNS"
-            echo "WindowsDownloadScript: $WindowsDownloadScript"
-            echo "StorageAccountName: $StorageAccountName"
-            echo "StorageAccountKey: $StorageAccountKey"
-            echo "StorageContainerName: $StorageContainerName"
-            echo "WinAppPath: $WinAppPath"
-            echo "BlobNamePrefix: $BlobNamePrefix"--#>
-                Invoke-Command -ComputerName $cloudServieDNS -Credential $credential `
-                     -SessionOption $sessionOption `
-                    -InDisconnectedSession -UseSSL -Port $publicWinRMPort `
-                    -FilePath $WindowsDownloadScript `
-                    -ArgumentList $StorageAccountName, $StorageAccountKey, $StorageContainerName, $WinAppPath, $BlobNamePrefix
-                
-                if ($error.Count -gt 0)
-                {
-                    $logFileContent = $logFileContent + "ERROR OCCURRED: While remotely triggering the download script on the VM `n"
-                    
-                    # Reset the error variable, so that subsequent cmdlet execution will not consider this error
-                    $error.Clear()
-                }
+            #$PreScript = $deploymentScriptsDir + "\PreScript.ps1"
+           
+            Invoke-Command -ComputerName $cloudServieDNS -Credential $credential `
+                -InDisconnectedSession -SessionOption $sessionOption `
+                -UseSSL -Port $publicWinRMPort `
+                -FilePath $WindowsDownloadScript `
+                -ArgumentList $StorageAccountName, $StorageAccountKey, $StorageContainerName, $WinAppPath, $BlobNamePrefix
+                      
+            #$PostScript = $deploymentScriptsDir + "\PostScript.ps1"
 
-                $logFileContent = $logFileContent `
-                        + "~~~~~~~~~~~~~~ TRIGGERED DEPLOYMENT TO " `
-                        + $WindowsOS + " VM : " + $_.RoleName `
-                        + " ~~~~~~~~~~~~~~ `n"
+            if ($error.Count -gt 0)
+            {
+                $logFileContent = $logFileContent + "ERROR OCCURRED: While remotely triggering the download script on the VM `n"
+                    
+                # Reset the error variable, so that subsequent cmdlet execution will not consider this error
+                $error.Clear() 
+            }
+
+            $logFileContent = $logFileContent `
+                    + "~~~~~~~~~~~~~~ TRIGGERED DEPLOYMENT TO " `
+                    + $WindowsOS + " VM : " + $_.RoleName `
+                    + " ~~~~~~~~~~~~~~ `n"
             }
         }
         elseif ($OS -ieq $LinuxOS)

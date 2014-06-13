@@ -1,4 +1,18 @@
 <#
+-------------------------------------------------------------------------
+ Copyright 2013 Microsoft Open Technologies, Inc.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at 
+   http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+--------------------------------------------------------------------------
+#>
+<#
 .SYNOPSIS
     Downloads Build binaries from Azure Storage Container to a local folder.
 
@@ -36,51 +50,30 @@ param (
 
 function logAzureError ($errorObj)
 {
-        $errorMsg = $errorObj.InvocationInfo.InvocationName.ToString() + "  :  " + $errorObj.ToString() + "`n" `
-                        + $errorObj.InvocationInfo.PositionMessage.ToString() + "`n" `
-                        + "CategoryInfo  :  " + $errorObj.CategoryInfo.ToString() + "`n" `
-                        + "FullyQualifiedErrorId  :  " + $errorObj.FullyQualifiedErrorId.ToString()
+    $errorMsg = $errorObj.InvocationInfo.InvocationName.ToString() + "  :  " + $errorObj.ToString() + "`n" `
+                    + $errorObj.InvocationInfo.PositionMessage.ToString() + "`n" `
+                    + "CategoryInfo  :  " + $errorObj.CategoryInfo.ToString() + "`n" `
+                    + "FullyQualifiedErrorId  :  " + $errorObj.FullyQualifiedErrorId.ToString()
     
-        return $errorMsg
+    return $errorMsg
 }
 
 function UnZipFile($File, $Destination)
 {
- 
- 
- If (-not $ForceCOM -and ($PSVersionTable.PSVersion.Major -ge 3) -and
-       ((Get-ItemProperty -Path "HKLM:\Software\Microsoft\NET Framework Setup\NDP\v4\Full" -ErrorAction SilentlyContinue).Version -like "4.5*" -or
-       (Get-ItemProperty -Path "HKLM:\Software\Microsoft\NET Framework Setup\NDP\v4\Client" -ErrorAction SilentlyContinue).Version -like "4.5*")) {
-
-        Write-Verbose -Message "Attempting to Unzip $File to location $Destination using .NET 4.5"
-
-        try {
-            [System.Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.FileSystem") | Out-Null
-            [System.IO.Compression.ZipFile]::ExtractToDirectory("$File", "$Destination")
-        }
-        catch {
-            Write-Warning -Message "Unexpected Error. Error details: $_.Exception.Message"
-        }
-
-
+    $UnZipfile = "$Destination\7Zip\7za.exe"
+    if ((Test-Path $UnZipfile))
+    {
+        Start-Process -FilePath $UnZipfile -ArgumentList "x ""$File"" -ryo""$Destination""" -PassThru | Wait-Process
     }
-    else {
-
-        Write-Verbose -Message "Attempting to Unzip $File to location $Destination using COM"
-
-        try {
-            $shell = New-Object -ComObject Shell.Application
-            $shell.Namespace($destination).copyhere(($shell.NameSpace($file)).items())
-        }
-        catch {
-            Write-Warning -Message "Unexpected Error. Error details: $_.Exception.Message"
-        }
-
+    else
+    {
+        echo "7za.exe not exists for unzip this, build looks for $UnZipfile and failed"
     }
 }
-    
+
 Try
 {
+    md "C:\thiru\test" 
     # Reset the error variable
     $error.clear()
 
@@ -122,51 +115,44 @@ Try
         $logFileContent = '';
 
         # Check if Web PI Command exists, else install it so that Azure PowerShell can be installed through it
-#Get-Command 'WebPICmd'
-        #if ($error.Count -gt 0)
-        #{
-            # Reset the error variable, so that subsequent cmdlet execution will not consider this error
-            $error.clear()
+        # Reset the error variable, so that subsequent cmdlet execution will not consider this error
+        $error.clear()
                     
-            $logFileContent = $logFileContent + "Web PI Command does not exist. Installation will start.... `n"
+        $logFileContent = $logFileContent + "Web PI Command does not exist. Installation will start.... `n"
             
-            # Download and Install Web Platform Installer Command Line
-            if ([IntPtr]::Size -eq 4)
-            {
-                (new-object net.webclient).DownloadFile('http://download.microsoft.com/download/7/0/4/704CEB4C-9F42-4962-A2B0-5C84B0682C7A/WebPlatformInstaller_x86_en-US.msi', $webPICmdMSI)
-            }
-            else
-            {
-                (new-object net.webclient).DownloadFile('http://download.microsoft.com/download/7/0/4/704CEB4C-9F42-4962-A2B0-5C84B0682C7A/WebPlatformInstaller_amd64_en-US.msi', $webPICmdMSI)
-            }
+        # Download and Install Web Platform Installer Command Line
+        if ([IntPtr]::Size -eq 4)
+        {
+            (new-object net.webclient).DownloadFile('http://download.microsoft.com/download/7/0/4/704CEB4C-9F42-4962-A2B0-5C84B0682C7A/WebPlatformInstaller_x86_en-US.msi', $webPICmdMSI)
+        }
+        else
+        {
+            (new-object net.webclient).DownloadFile('http://download.microsoft.com/download/7/0/4/704CEB4C-9F42-4962-A2B0-5C84B0682C7A/WebPlatformInstaller_amd64_en-US.msi', $webPICmdMSI)
+        }
 
-            Start-Process -FilePath $webPICmdMSI -ArgumentList '/quiet' -PassThru | Wait-Process
+        Start-Process -FilePath $webPICmdMSI -ArgumentList '/quiet' -PassThru | Wait-Process
+        
+        if ($error.Count -gt 0)
+        {
+            throw "ERROR OCCURRED: While installing Web PI Command"
+        }
+        else
+        {
+            # Set the %PATH% environment variable from the system to the environment variable in the PowerShell session
+            # Else, the updated %PATH% will not be available during the script run
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+
+            # Once the installation is successful, delete the downloaded MSI and log files
+            Remove-Item $webPICmdMSI
             if ($error.Count -gt 0)
             {
-                throw "ERROR OCCURRED: While installing Web PI Command"
+                $logFileContent = $logFileContent + "..... WARNING: While deleting " + $webPICmdMSI + "`n"
+                $error.clear()
             }
-            else
-            {
-                # Set the %PATH% environment variable from the system to the environment variable in the PowerShell session
-                # Else, the updated %PATH% will not be available during the script run
-                $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
-
-                # Once the installation is successful, delete the downloaded MSI and log files
-                Remove-Item $webPICmdMSI
-                if ($error.Count -gt 0)
-                {
-                    $logFileContent = $logFileContent + "..... WARNING: While deleting " + $webPICmdMSI + "`n"
-                    $error.clear()
-                }
 
 
-                $logFileContent = $logFileContent + "....Web PI Command has been successfully installed. `n"
-            }
-        #}
-        ##else
-#{
-#$logFileContent = $logFileContent + "Web PI Command is already installed. `n"
-       # }
+            $logFileContent = $logFileContent + "....Web PI Command has been successfully installed. `n"
+        }
 
         echo $logFileContent 
         $logFileContent = '';
@@ -206,7 +192,7 @@ Try
     if ($continueScript)
     {
         # Load the installed Azure module
-       # Import-Module Azure
+        # Import-Module Azure
         if ($error.Count -gt 0)
         {
             throw "ERROR OCCURRED: While importing Azure PowerShell module"
@@ -226,7 +212,7 @@ Try
         {
             # List the Azure Blobs matching the BlobNamePrefix
             $blobsList = Get-AzureStorageBlob -Container $ContainerName -Context $context -Prefix $BlobNamePrefix
-            $cmdletError = ""
+            $cmdletError = "" 
 
             if ($error.Count -gt 0)
             {
@@ -240,17 +226,18 @@ Try
                 {
                   
                     Echo 'Start downloading the built folder from azure storage'
-
                     $downloadResult = Get-AzureStorageBlobContent -Container $ContainerName -Context $context -Blob $blob.Name -Destination $Destination -Force
                     Echo 'Finized downloading to the target'
                   
                     $cmdletError = ""
-                    #Echo 'Start Unzipping the folder'
-                    #ZipedFileName = "$Destination\$BlobNamePrefix"
-                    #UnZipFile $ZipedFileName $Destination
-                    #Echo 'Finized Unzipping to the target'
+                    Echo 'Start Unzipping the folder'
+                    $ZipedFileName = "$Destination\$BlobNamePrefix"
+                    UnZipFile $ZipedFileName $Destination
+                    Echo 'Finized Unzipping to the target'
 
-                    if ($error.Count -gt 0)    
+                    md "C:\thiru\test1" 
+
+                   if ($error.Count -gt 0)    
                     {
                         $cmdletError = logAzureError $error[0]
 
