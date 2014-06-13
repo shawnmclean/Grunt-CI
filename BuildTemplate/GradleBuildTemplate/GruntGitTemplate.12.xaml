@@ -48,6 +48,8 @@
     <x:Property Name="VMAppPathLinux" Type="InArgument(x:String)" />
     <x:Property Name="GruntOptions" Type="InArgument(x:String)" />
     <x:Property Name="GruntJSPath11" Type="OutArgument(scg:IEnumerable(x:String))" />
+    <x:Property Name="PostScript" Type="InArgument(x:String)" />
+    <x:Property Name="PreScript" Type="InArgument(x:String)" />
   </x:Members>
   <this:Process.CheckoutOverride>
     <InArgument x:TypeArguments="x:String" />
@@ -65,7 +67,7 @@
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Provide the name of the Cloud Service which hosts the VMs" DisplayName="06. Cloud Service Name" Editor="" ParameterName="CloudServiceName" />
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Provide the User Name to connect to the VM(s)" DisplayName="07. VM User Name (Windows/Linux)" ParameterName="VMUserName" />
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Provide the Password to connect to the Windows VM(s).&#xA;Once you enter the password, it will be encrypted and masked." DisplayName="08. VM Password (Windows)" Editor="BuildProcess.CustomEditors.PasswordEditor, BuildProcess" ParameterName="VMPassword" />
-      <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Provide the full path to the SSL Certificate which is required to connect to the Windows VM(s). &#xA;This path should be accessible by the TFS Build Server" DisplayName="12. SSL Certificate (Not used)" ParameterName="VMCertificate" />
+      <mtbw:ProcessParameterMetadata BrowsableWhen="Never" Category="#400 Continuous Deployment - Azure" Description="Provide the full path to the SSL Certificate which is required to connect to the Windows VM(s). &#xA;This path should be accessible by the TFS Build Server" DisplayName="12. SSL Certificate (Not used)" ParameterName="VMCertificate" />
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Provide the full path to the SSH Key file which is required to connect to the Linux VM(s). &#xA;This path should be accessible by the TFS Build Server" DisplayName="10. SSH Key File (Linux)" Editor="" ParameterName="VMSSHKey" />
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Specify the location on the Windows VM(s), to which the application should be deployed to." DisplayName="09. Application Path (Windows)" ParameterName="VMAppPathWindows" />
       <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="Specify the location on the Linux VM(s), to which the application should be deployed to" DisplayName="11. Application Path (Linux)" ParameterName="VMAppPathLinux" />
@@ -78,6 +80,8 @@
       <mtbw:ProcessParameterMetadata BrowsableWhen="Always" Description="Specify the tags used to select the build agent." DisplayName="Tags filter" Editor="Microsoft.TeamFoundation.Build.Controls.TagsEditor, Microsoft.TeamFoundation.Build.Controls" ParameterName="AgentSettings.Tags" />
       <mtbw:ProcessParameterMetadata BrowsableWhen="Always" Category="#500 Advanced" Description="Set this to true to create a work item when the build fails." DisplayName="Create work item on failure" ParameterName="CreateWorkItem" />
       <mtbw:ProcessParameterMetadata BrowsableWhen="Always" Category="#500 Advanced" Description="Set this to true to update the associated work items by setting the Fixed In Build field to the build number of this build." DisplayName="Update work items with build number" ParameterName="UpdateAssociatedWorkItems" />
+      <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="This script will run before copying the built application to the target VM's. &#xA;This script will be run on target VM's as remote and can use this script for stoping the application or for any other purpose." DisplayName="12. Pre Script" Editor="System.ComponentModel.Design.MultilineStringEditor, System.Drawing.Design" ParameterName="PreScript" />
+      <mtbw:ProcessParameterMetadata Category="#400 Continuous Deployment - Azure" Description="This script will run after copying the built application to the target VM's. &#xA;This script will be run on target VM's as remote and can use this script for starting the application or for any other purpose." DisplayName="13. Post script" ParameterName="PostScript" />
     </mtbw:ProcessParameterMetadataCollection>
   </this:Process.Metadata>
   <mva:VisualBasic.Settings>
@@ -147,12 +151,12 @@
         <Variable x:TypeArguments="x:String" Name="buildNumber" />
         <Variable x:TypeArguments="x:String" Name="invokeProcessCmd" />
         <Variable x:TypeArguments="x:String" Name="buildDir" />
-        <Variable x:TypeArguments="x:String" Name="winVMPassword" />
+        <Variable x:TypeArguments="x:String" Default="null" Name="winVMPassword" />
         <Variable x:TypeArguments="x:Boolean" Default="False" Name="vmInputsProvided" />
         <Variable x:TypeArguments="x:String" Name="storageAccountName" />
         <Variable x:TypeArguments="x:String" Name="storageContainerName" />
         <Variable x:TypeArguments="x:String" Default="http://devopsjava.blob.core.windows.net/gradle/" Name="deploymentScriptsContainer" />
-        <Variable x:TypeArguments="x:String" Default="DeploymentScripts.zip" Name="deploymentScriptsZip" />
+        <Variable x:TypeArguments="x:String" Default="GruntDeploymentScripts.zip" Name="deploymentScriptsZip" />
         <Variable x:TypeArguments="x:String" Default="\DeploymentScripts" Name="deploymentScriptsDir" />
         <Variable x:TypeArguments="x:String" Default="DeployToAzureVMs.ps1" Name="deploymentScript" />
         <Variable x:TypeArguments="x:String" Name="NPMInstall" />
@@ -252,28 +256,38 @@
               </If.Then>
             </If>
             <If Condition="[VMPassword Is Nothing]" DisplayName="Get VM Password" sap2010:WorkflowViewState.IdRef="If_18">
+              <If.Then>
+                <Assign DisplayName="Set VM password to none" sap2010:WorkflowViewState.IdRef="Assign_55">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="x:String">[winVMPassword]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="x:String">null</InArgument>
+                  </Assign.Value>
+                </Assign>
+              </If.Then>
               <If.Else>
                 <Sequence sap2010:WorkflowViewState.IdRef="Sequence_16">
-                  <TryCatch DisplayName="" sap2010:WorkflowViewState.IdRef="TryCatch_4">
+                  <TryCatch DisplayName="Try" sap2010:WorkflowViewState.IdRef="TryCatch_4">
                     <TryCatch.Try>
-                      <If Condition="[VMPassword.PasswordField IsNot Nothing]" DisplayName="Check for VM password provided" sap2010:WorkflowViewState.IdRef="If_17">
+                      <If Condition="[VMPassword.PasswordField IsNot Nothing]" DisplayName="Check for VM password provided?" sap2010:WorkflowViewState.IdRef="If_17">
                         <If.Then>
                           <Assign DisplayName="Get VM password" sap2010:WorkflowViewState.IdRef="Assign_35">
                             <Assign.To>
                               <OutArgument x:TypeArguments="x:String">[winVMPassword]</OutArgument>
                             </Assign.To>
                             <Assign.Value>
-                              <InArgument x:TypeArguments="x:String">[VMPassword.PasswordField]</InArgument>
+                              <InArgument x:TypeArguments="x:String">[VMPassword.ToString()]</InArgument>
                             </Assign.Value>
                           </Assign>
                         </If.Then>
                         <If.Else>
-                          <Assign DisplayName="Get VM password" sap2010:WorkflowViewState.IdRef="Assign_36">
+                          <Assign DisplayName="Set VM password to none" sap2010:WorkflowViewState.IdRef="Assign_56">
                             <Assign.To>
                               <OutArgument x:TypeArguments="x:String">[winVMPassword]</OutArgument>
                             </Assign.To>
                             <Assign.Value>
-                              <InArgument x:TypeArguments="x:String">[String.Empty]</InArgument>
+                              <InArgument x:TypeArguments="x:String">null</InArgument>
                             </Assign.Value>
                           </Assign>
                         </If.Else>
@@ -285,12 +299,12 @@
                           <ActivityAction.Argument>
                             <DelegateInArgument x:TypeArguments="s:NullReferenceException" Name="exception" />
                           </ActivityAction.Argument>
-                          <Assign DisplayName="Get VM password" sap2010:WorkflowViewState.IdRef="Assign_37">
+                          <Assign DisplayName="Set VM password" sap2010:WorkflowViewState.IdRef="Assign_37">
                             <Assign.To>
                               <OutArgument x:TypeArguments="x:String">[winVMPassword]</OutArgument>
                             </Assign.To>
                             <Assign.Value>
-                              <InArgument x:TypeArguments="x:String">[String.Empty]</InArgument>
+                              <InArgument x:TypeArguments="x:String">null</InArgument>
                             </Assign.Value>
                           </Assign>
                         </ActivityAction>
@@ -299,6 +313,18 @@
                   </TryCatch>
                 </Sequence>
               </If.Else>
+            </If>
+            <If Condition="[String.IsNullOrEmpty(winVMPassword)]" sap2010:WorkflowViewState.IdRef="If_27">
+              <If.Then>
+                <Assign DisplayName="Set VM password" sap2010:WorkflowViewState.IdRef="Assign_57">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="x:String">[winVMPassword]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="x:String">null</InArgument>
+                  </Assign.Value>
+                </Assign>
+              </If.Then>
             </If>
             <If Condition="[String.IsNullOrEmpty(winVMPassword) And String.IsNullOrEmpty(VMSSHKey)]" DisplayName="Is VM password or SSH certificate provided?" sap2010:WorkflowViewState.IdRef="If_9">
               <If.Then>
@@ -313,7 +339,25 @@
                   </If.Then>
                 </If>
               </If.Then>
+              <If.Else>
+                <Assign DisplayName="Assign Windows path to null" sap2010:WorkflowViewState.IdRef="Assign_51">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="x:String">[VMAppPathWindows]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="x:String">null</InArgument>
+                  </Assign.Value>
+                </Assign>
+              </If.Else>
             </If>
+            <Assign DisplayName="Assign VM certificate to null" sap2010:WorkflowViewState.IdRef="Assign_52">
+              <Assign.To>
+                <OutArgument x:TypeArguments="x:String">[VMCertificate]</OutArgument>
+              </Assign.To>
+              <Assign.Value>
+                <InArgument x:TypeArguments="x:String">null</InArgument>
+              </Assign.Value>
+            </Assign>
             <If Condition="[Not String.IsNullOrEmpty(VMSSHKey)]" DisplayName="Is SSH certificate and Application path provided?" sap2010:WorkflowViewState.IdRef="If_13">
               <If.Then>
                 <Sequence sap2010:WorkflowViewState.IdRef="Sequence_15">
@@ -345,7 +389,6 @@
       </If>
       <Sequence DisplayName="Initialize Build Variables" sap2010:WorkflowViewState.IdRef="Sequence_2">
         <mtbwa:GetBuildDetail DisplayName="Get Agent Detail" sap2010:WorkflowViewState.IdRef="GetBuildDetail_1" Result="[buildDetail]" />
-        <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_34" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;buildNumber&quot; + buildNumber]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
         <Assign DisplayName="Get the Build Number" sap2010:WorkflowViewState.IdRef="Assign_28">
           <Assign.To>
             <OutArgument x:TypeArguments="x:String">[buildNumber]</OutArgument>
@@ -354,17 +397,15 @@
             <InArgument x:TypeArguments="x:String">[buildDetail.BuildNumber]</InArgument>
           </Assign.Value>
         </Assign>
-        <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_35" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;buildNumber&quot; + buildNumber]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
       </Sequence>
       <mtbwa:GetBuildDirectory DisplayName="Get Build Directory" sap2010:WorkflowViewState.IdRef="GetBuildDirectory_1" Result="[BuildDir]" />
-      <g:GetCleanCommandForBuild BuildPath="[buildDir]" DisplayName="Get Clean Command" sap2010:WorkflowViewState.IdRef="GetCleanCommandForBuild_1" Result="[CleanCommand]" />
-      <If Condition="[Not buildDir.Equals(String.Empty)]" sap2010:WorkflowViewState.IdRef="If_2">
+      <If Condition="[CleanRepository]" sap2010:WorkflowViewState.IdRef="If_2">
         <If.Then>
           <TryCatch sap2010:WorkflowViewState.IdRef="TryCatch_3">
             <TryCatch.Try>
               <Sequence sap2010:WorkflowViewState.IdRef="Sequence_10">
-                <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_19" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;buildDir:&quot; + buildDir + &quot;CleanCommand&quot; + CleanCommand]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
-                <mtbwa:InvokeProcess Arguments="[buildDir]" DisplayName="Clean build folder " FileName="[CleanCommand]" sap2010:WorkflowViewState.IdRef="InvokeProcess_4">
+                <g:GetCleanCommandForBuild BuildPath="[buildDir]" DisplayName="Get Clean Command" sap2010:WorkflowViewState.IdRef="GetCleanCommandForBuild_1" Result="[CleanCommand]" />
+                <mtbwa:InvokeProcess Arguments="[&quot;&quot;&quot;&quot; + buildDir + &quot;&quot;&quot;&quot;]" DisplayName="Clean build folder " FileName="[CleanCommand]" sap2010:WorkflowViewState.IdRef="InvokeProcess_4">
                   <mtbwa:InvokeProcess.ErrorDataReceived>
                     <ActivityAction x:TypeArguments="x:String">
                       <ActivityAction.Argument>
@@ -415,7 +456,6 @@
                 <InArgument x:TypeArguments="x:String">[(New FileInfo(GruntPath.First())).Directory.FullName]</InArgument>
               </Assign.Value>
             </Assign>
-            <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_16" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;GruntRootPath&quot; + GruntRootPath]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
             <TryCatch DisplayName="Try Catch for npm Install" sap2010:WorkflowViewState.IdRef="TryCatch_2">
               <TryCatch.Try>
                 <Sequence DisplayName="Execute Grunt" sap2010:WorkflowViewState.IdRef="Sequence_9">
@@ -439,8 +479,6 @@
                     </mtbwa:InvokeProcess.OutputDataReceived>
                   </mtbwa:InvokeProcess>
                   <g:ExecuteGruntTask BuildPath="[buildDir]" DisplayName="Get Grunt cmd" sap2010:WorkflowViewState.IdRef="ExecuteGruntTask_1" Result="[GruntCli]" />
-                  <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_2" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;path test-: &quot; + NPMInstall + &quot;...buildDir:&quot; + buildDir]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
-                  <mtbwa:WriteBuildMessage sap2010:WorkflowViewState.IdRef="WriteBuildMessage_25" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;GruntCli: &quot; + GruntCli]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
                 </Sequence>
               </TryCatch.Try>
               <TryCatch.Catches>
@@ -496,7 +534,55 @@
             <If.Then>
               <Sequence DisplayName="Azure Storage Upload &amp; Deployment to VMs" sap2010:WorkflowViewState.IdRef="Sequence_33">
                 <Sequence DisplayName="Azure Storage Upload" sap2010:WorkflowViewState.IdRef="Sequence_27">
-                  <g:ZipSource BuildPath="[buildDir]" sap2010:WorkflowViewState.IdRef="ZipSource_1" RARFileName="[GruntRARFileName]" Result="[GruntouttoRAR]" />
+                  <Sequence.Variables>
+                    <Variable x:TypeArguments="x:String" Name="ZipExe" />
+                    <Variable x:TypeArguments="x:String" Name="ZipeFileName" />
+                  </Sequence.Variables>
+                  <mtbwa:GetBuildDirectory sap2010:WorkflowViewState.IdRef="GetBuildDirectory_3" Result="[buildDir]" />
+                  <Assign DisplayName="Form Deployment Scripts Directory" sap2010:WorkflowViewState.IdRef="Assign_60">
+                    <Assign.To>
+                      <OutArgument x:TypeArguments="x:String">[deploymentScriptsDir]</OutArgument>
+                    </Assign.To>
+                    <Assign.Value>
+                      <InArgument x:TypeArguments="x:String">[buildDir + deploymentScriptsDir]</InArgument>
+                    </Assign.Value>
+                  </Assign>
+                  <mtbwa:DeleteDirectory Directory="[deploymentScriptsDir]" DisplayName="Delete Deployment Scripts Directory, if exists" sap2010:WorkflowViewState.IdRef="DeleteDirectory_3" />
+                  <mtbwa:CreateDirectory Directory="[deploymentScriptsDir]" DisplayName="Create Deployment Scripts Directory" sap2010:WorkflowViewState.IdRef="CreateDirectory_3" />
+                  <g:CopyZIPUtil BuildPath="[buildDir]" sap2010:WorkflowViewState.IdRef="CopyZIPUtil_1" Result="[ZipExe]" />
+                  <Assign sap2010:WorkflowViewState.IdRef="Assign_58">
+                    <Assign.To>
+                      <OutArgument x:TypeArguments="x:String">[GruntRARFileName]</OutArgument>
+                    </Assign.To>
+                    <Assign.Value>
+                      <InArgument x:TypeArguments="x:String">[String.Format("GruntBuiltSource-{0:yyyy-MM-dd_hh-mm-ss-tt}.zip", DateTime.Now)]</InArgument>
+                    </Assign.Value>
+                  </Assign>
+                  <Assign sap2010:WorkflowViewState.IdRef="Assign_59">
+                    <Assign.To>
+                      <OutArgument x:TypeArguments="x:String">[GruntouttoRAR]</OutArgument>
+                    </Assign.To>
+                    <Assign.Value>
+                      <InArgument x:TypeArguments="x:String">[buildDir + "\" + GruntRARFileName]</InArgument>
+                    </Assign.Value>
+                  </Assign>
+                  <mtbwa:InvokeProcess Arguments="[String.Format(&quot; a &quot;&quot;{0}&quot;&quot; -xr!?git\* &quot;&quot;{1}&quot;&quot;&quot;, GruntouttoRAR, buildDir + &quot;\src\*\*&quot;)]" FileName="[ZipExe]" sap2010:WorkflowViewState.IdRef="InvokeProcess_18">
+                    <mtbwa:InvokeProcess.ErrorDataReceived>
+                      <ActivityAction x:TypeArguments="x:String">
+                        <ActivityAction.Argument>
+                          <DelegateInArgument x:TypeArguments="x:String" Name="errOutput" />
+                        </ActivityAction.Argument>
+                        <mtbwa:WriteBuildError DisplayName="Write Build Error" sap2010:WorkflowViewState.IdRef="WriteBuildError_4" Message="[errOutput]" />
+                      </ActivityAction>
+                    </mtbwa:InvokeProcess.ErrorDataReceived>
+                    <mtbwa:InvokeProcess.OutputDataReceived>
+                      <ActivityAction x:TypeArguments="x:String">
+                        <ActivityAction.Argument>
+                          <DelegateInArgument x:TypeArguments="x:String" Name="stdOutput" />
+                        </ActivityAction.Argument>
+                      </ActivityAction>
+                    </mtbwa:InvokeProcess.OutputDataReceived>
+                  </mtbwa:InvokeProcess>
                   <Assign DisplayName="Form the Azure PowerShell ScriptBlock" sap2010:WorkflowViewState.IdRef="Assign_46">
                     <Assign.To>
                       <OutArgument x:TypeArguments="x:String">[invokeProcessCmd]</OutArgument>
@@ -526,18 +612,10 @@
                   </mtbwa:InvokeProcess>
                 </Sequence>
                 <Sequence DisplayName="Deployment to VM(s)" sap2010:WorkflowViewState.IdRef="Sequence_32">
+                  <Sequence.Variables>
+                    <Variable x:TypeArguments="x:String" Name="UnZipExe" />
+                  </Sequence.Variables>
                   <Sequence DisplayName="Download Deployment Scripts Zip" sap2010:WorkflowViewState.IdRef="Sequence_28">
-                    <mtbwa:GetBuildDirectory sap2010:WorkflowViewState.IdRef="GetBuildDirectory_2" Result="[buildDir]" />
-                    <Assign DisplayName="Form Deployment Scripts Directory" sap2010:WorkflowViewState.IdRef="Assign_47">
-                      <Assign.To>
-                        <OutArgument x:TypeArguments="x:String">[deploymentScriptsDir]</OutArgument>
-                      </Assign.To>
-                      <Assign.Value>
-                        <InArgument x:TypeArguments="x:String">[buildDir + deploymentScriptsDir]</InArgument>
-                      </Assign.Value>
-                    </Assign>
-                    <mtbwa:DeleteDirectory Directory="[deploymentScriptsDir]" DisplayName="Delete Deployment Scripts Directory, if exists" sap2010:WorkflowViewState.IdRef="DeleteDirectory_2" />
-                    <mtbwa:CreateDirectory Directory="[deploymentScriptsDir]" DisplayName="Create Deployment Scripts Directory" sap2010:WorkflowViewState.IdRef="CreateDirectory_2" />
                     <Assign DisplayName="Form the Azure PowerShell ScriptBlock - Download Deployment Scripts Zip" sap2010:WorkflowViewState.IdRef="Assign_48">
                       <Assign.To>
                         <OutArgument x:TypeArguments="x:String">[invokeProcessCmd]</OutArgument>
@@ -601,12 +679,13 @@
                         <If Condition="[System.IO.File.Exists(deploymentScriptsDir + &quot;\&quot; + deploymentScript)]" DisplayName="If Deployment Wrapper Script is extracted" sap2010:WorkflowViewState.IdRef="If_23">
                           <If.Then>
                             <Sequence DisplayName="Invoke Deployment Wrapper Script" sap2010:WorkflowViewState.IdRef="Sequence_30">
+                              <g:FormPreandPostScript BuildPath="[deploymentScriptsDir]" sap2010:WorkflowViewState.IdRef="FormPreandPostScript_1" PostScript="[PostScript]" PreScript="[PreScript]" />
                               <Assign DisplayName="Form the Azure PowerShell ScriptBlock - Execute Deployment Wrapper Script" sap2010:WorkflowViewState.IdRef="Assign_50">
                                 <Assign.To>
                                   <OutArgument x:TypeArguments="x:String">[invokeProcessCmd]</OutArgument>
                                 </Assign.To>
                                 <Assign.Value>
-                                  <InArgument x:TypeArguments="x:String">["-File """ + deploymentScriptsDir + "\" + deploymentScript + """ """ + AzureSubscriptionId + """ """ + AzureManagementCertificate + """ """ + CloudServiceName + """ """ + storageAccountName + """ """ + StorageAccountKey + """ """ + storageContainerName + """ """ + GruntRARFileName + """ """ + VMUserName + """ """ + VMPassword.ToString + """ """ + VMCertificate + """ """ + VMAppPathWindows + """ """ + deploymentScriptsDir + """ """ + VMSSHKey + """ """ + VMAppPathLinux + """"]</InArgument>
+                                  <InArgument x:TypeArguments="x:String">["-File """ + deploymentScriptsDir + "\" + deploymentScript + """ """ + AzureSubscriptionId + """ """ + AzureManagementCertificate + """ """ + CloudServiceName + """ """ + storageAccountName + """ """ + StorageAccountKey + """ """ + storageContainerName + """ """ + GruntRARFileName + """ """ + VMUserName + """ """ + winVMPassword + """ """ + VMCertificate + """ """ + VMAppPathWindows + """ """ + deploymentScriptsDir + """ """ + VMSSHKey + """ """ + VMAppPathLinux + """"]</InArgument>
                                 </Assign.Value>
                               </Assign>
                               <mtbwa:WriteBuildMessage DisplayName="Execute Deployment Wrapper Script Command" sap2010:WorkflowViewState.IdRef="WriteBuildMessage_42" Importance="[Microsoft.TeamFoundation.Build.Client.BuildMessageImportance.High]" Message="[&quot;Azure PowerShell Command - Execute Deployment Wrapper Script: powershell &quot; + invokeProcessCmd]" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" />
@@ -660,17 +739,17 @@
         </TryCatch.Catches>
       </TryCatch>
     </mtbwa:AgentScope>
-    <sads:DebugSymbol.Symbol>d0lDOlxUaGlydSBHcnVudFxCdWlsZFRlbXBsYXRlXEdyYWRsZUJ1aWxkVGVtcGxhdGVcR3J1bnRHaXRUZW1wbGF0ZS4xMi54YW1spAIB9wYB/QYBBwHDAQHKAQEGAY0FAZQFAQUB5wEB7wQBBAG9BQHEBQEDAWUBpAEBAo4BA5gFDgIBAY8BBY8BsgEDAZQDkAEFlgUYAgECjwFFjwFaAwGVA5AB8AGQAcwCAgELkAGCAZAB4wECAQqQAd0CkAGLAwIBCZcBN5cBPgIBCJoBNpoBZwIBB5sBNpsBTQIBBpwBNpwBSgIBBZ0BNp0BTAIBBKMBN6MBPQIBA6YBB6YBxQEDAZADpwEHwAESAwGCA8EBB9kCDAMBnALaAgfmAhIDAYwC5wIH5wKOAQMBiQLoAgfoAq8BAwGEAukCB44DDAMB7AGPAwePA7wBAwHmAZADB5AD4QEDAeIBkQMH1wMSAwGlAdgDB+kDHQMBlwHqAweVBRICAQymAaUBpgGqAQMBkwOmATOmATgDAZIDpgG9AaYBwgEDAZEDqAEJvwEfAwGDA8EBFcEBLQMBnQLDAQvXAhYDAZ8C2wIJ2wKKAQMBmQLcAgncAsICAwGVAt0CCeQCEgMBkQLlAgnlAsICAwGNAucCf+cCiwEDAYoC6AIs6AI4AwGHAugCnAHoAqwBAwGFAukCFekCOgMB7QHrAguMAxYDAe8BjwMmjwM5AwHqAY8DQY8DVQMB6AGPA4cBjwONAQMB5wGQA8EBkAPeAQMB5AGQA3WQA3sDAeMBkwMLyAMWAwGrAdADD9MDGgMBpgHYAybYA5kBAwGhAdgDvQHYA8kBAwGfAeYDDeYDxAIDAZsB3gMN3gOQAQMBmAHvAwuGBRACARKOBQ+RBRoCAQ2oASioATMDAY4DqAFMqAFRAwGNA7UBD7wBFAMBhAPEAQ3IARIDAf0CyQENzQESAwH4As4BDe4BEgMB4ALvAQ3zARIDAdsC9AEN+AESAwHWAvkBDf0BEgMB0QL+AQ2uAhIDAb8CrwINswISAwG5ArQCDbwCEgMBsgK9Ag3WAhIDAaAC2wJ42wKHAQMBmgLcArIB3ALbAQMBlwLcAmTcAqkBAwGWAuICNOICTQMBlALfAjXfAkIDAZIC5QKyAeUC2wEDAY8C5QJk5QKpAQMBjgLtAg+BAxoDAfABlAMNlAPpAQMB3QGVAw2ZAxIDAdkBmgMNoQMWAwHVAaIDDaIDygIDAdEBowMNxwMYAwGsAdEDEdEDtQEDAagB0gMR0gODAQMBpwHmA9AB5gPdAQMBnQHmA4IB5gPHAQMBnAHeA4AB3gONAQMBmQHvAxnvAzECARPxAw+EBRoCARWPBRGPBcUBAgEPkAURkAWDAQIBDrUBHbUBfwMBhQO3ARO3AagBAwGLA7oBE7oByQIDAYcDxAEbxAFIAwH+AsYBEcYBtAEDAYADyQEbyQFPAwH5AssBEcsBuwEDAfsCzgEbzgFIAwHhAtABEdABugEDAfYC0wER7AEcAwHjAu8BG+8BRgMB3ALxARHxAbkBAwHeAvQBG/QBRQMB1wL2ARH2AbEBAwHZAvkBG/kBPwMB0gL7ARH7AasBAwHUAv4BG/4BNAMBwAKAAhGsAhwDAcECrwIbrwJlAwG6ArECEbEC4gEDAb0CtAIbtAJRAwGzArYCEboCFgMBtAK9Ahu9AkEDAaECvwIR1AIcAwGjAu4CEe4C7wIDAf8B7wIRgAMnAwHxAZQDlQGUA9EBAwHgAZQD2QGUA+YBAwHeAZUDG5UDNQMB2gGXAxGXA+EBAwHbAZ8DOJ8DbgMB2AGcAzmcA0gDAdYBogO2AaID4wEDAdMBogNoogOtAQMB0gGlAxG8AxwDAa0B0QNm0QN4AwGpAfIDEY8EHAIBd5AEEYMFHAIBFo8Fdo8FiAECARC3ASS3AXsDAYwDugG8AboB4gEDAYkDugFuugGzAQMBiAPGATbGAYcBAwGBA8sBNssBjgEDAfwC0AE20AGNAQMB9wLUARPbARwDAfAC3AET4wEcAwHqAuQBE+sBHAMB5ALxATbxAYsBAwHfAvYBNvYBhAEDAdoC+wE2+wF+AwHVAoECE6sCHgMBwgKxAjaxArUBAwG+ArYCH7YCSQMBtQK4AhW4AswBAwG3AsACE8QCGAMBrQLFAhPTAhgDAaQC7gK6Ae4CiAIDAYEC7gJs7gKxAQMBgALvAjDvAjwDAfwB7wJo7wJ4AwH6Af0CF/0CswIDAfYB9QIX9QKzAgMB8gGXAyKXA7QBAwHcAaYDE6YDpwEDAcwBpwMTuAMpAwG8AbkDE7kDpQEDAbcBugMTugPxAgMBsgG7AxO7A8gCAwGuAfMDE/MDoQEDAZAB9AMT+wMcAwGHAfwDE/wDqQMDAYMB/QMTjgQpAgF4kQQTuAQeAgFPuQQTggUYAgEX2QE+2QGCAQMB8wLWAT/WAVMDAfEC4QE+4QGFAQMB7QLeAT/eAVMDAesC6QE+6QGHAQMB5wLmAT/mAVUDAeUCgwIXmAIcAwHHAqACG6cCJAMBwwK4Ajq4Ap8BAwG4AsACIcACSQMBrgLCAhfCAs0BAwGwAsUCIcUCSAMBpQLHAhfHAoECAwGrAsoCF9ECIAMBpwL9Ar8B/QLMAQMB+AH9AnL9ArYBAwH3AfUCvwH1AswBAwH0AfUCcvUCtgEDAfMBpgMypgM+AwHPAaYDlgGmA6QBAwHNAacDMqcDQwMByQGnA2unA3kDAccBpwO9AacDyQEDAcUBtQMZtQPYAgMBwQGtAxmtA88CAwG9AbkDMbkDPQMBugG5A5YBuQOiAQMBuAG6A7sBugOKAgMBtAG6A226A7IBAwGzAbsDvAG7A+EBAwGwAbsDbrsDswEDAa8B8wNx8wOFAQMBlQHzAyrzAzYDAZMB8wONAfMDngEDAZEB+QM++QPXAwMBigH2Az/2A1EDAYgB/APmAfwDwgIDAYUB/AOZAfwD3QEDAYQB/QMy/QNGAwGAAf0DdP0DgAECAX+LBBmLBLYCAgF7gwQZgwSqAQIBeZIEFZIEegIBdJMEFZoEHgIBbpsEFZsEwgECAWqcBBWcBLcBAgFnnQQVpAQeAgFfpQQVpQTEAwIBW6YEFbcEKwIBULkEIbkEdwIBGLsEF/0EIgIBHYAFF4AFoQICARuDAiWDAk8DAcgChQIbjAIkAwHNAo8CG5YCJAMByQKlAkalAlQDAcYCogJHogJWAwHEAsICPMICnwEDAbECxwI8xwLTAQMBrALPAkPPAkcDAaoCzAJEzAJWAwGoArUD5AG1A/EBAwHDAbUDlgG1A9sBAwHCAa0D2wGtA+gBAwG/Aa0DjQGtA9IBAwG+AYsEwgGLBM8BAgF9iwR0iwS5AQIBfIMEYIMEfAIBepIEa5IEdwIBdZgEQJgEYQIBcZUEQZUEVwIBb5sENpsETgIBbJwENpwETgIBaKIEQKIE8gECAWKfBEGfBFMCAWClBPMBpQTdAgIBXaUEpgGlBOoBAgFcpgQ0pgRIAgFYpgRppgR1AgFXtAQbtAS4AgIBU6wEG6wErAECAVG8BBnYBCQCATjZBBn8BB4CAR6ABV6ABfMBAgEcigJGigJgAwHQAocCR4cCVgMBzgKUAkaUAlQDAcwCkQJHkQJWAwHKArQExAG0BNEBAgFVtAR2tAS7AQIBVKwEYqwEfgIBUr0EG8QEJAIBSMUEG8UEwQMCAUTGBBvXBDECATnZBCfZBHkCAR/bBB33BCgCAST6BB36BKYCAgEiwgRGwgToAgIBS78ER78EWQIBScUE9QHFBNoCAgFGxQSnAcUE7AECAUXGBDrGBE4CAUHGBIEBxgSNAQIBQNQEIdQEvgICATzMBCHMBLIBAgE63AQf4wQoAgE05AQf5ATTAwIBMOUEH/YENQIBJfoEZPoE+AECASPUBMoB1ATXAQIBPtQEfNQEwQECAT3MBGjMBIQBAgE74QRK4QSrBAIBN94ES94EXQIBNeQEgALkBOwCAgEy5ASyAeQE9wECATHlBD7lBFICAS3lBIwB5QSYAQIBLPMEJfMEwgICASjrBCXrBLYBAgEm8wTOAfME2wECASrzBIAB8wTFAQIBKesEbOsEiAECASc=</sads:DebugSymbol.Symbol>
+    <sads:DebugSymbol.Symbol>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</sads:DebugSymbol.Symbol>
   </Sequence>
   <sap2010:WorkflowViewState.ViewStateManager>
     <sap2010:ViewStateManager>
-      <sap2010:ViewStateData Id="SetBuildNumber_1" sap:VirtualizedContainerService.HintSize="945,22" />
-      <sap2010:ViewStateData Id="InitializeEnvironment_3" sap:VirtualizedContainerService.HintSize="923,22" />
+      <sap2010:ViewStateData Id="SetBuildNumber_1" sap:VirtualizedContainerService.HintSize="985,22" />
+      <sap2010:ViewStateData Id="InitializeEnvironment_3" sap:VirtualizedContainerService.HintSize="963,22" />
       <sap2010:ViewStateData Id="Throw_2" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_20" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="If_3" sap:VirtualizedContainerService.HintSize="464,208" />
       <sap2010:ViewStateData Id="InvokeProcess_5" sap:VirtualizedContainerService.HintSize="498,449" />
-      <sap2010:ViewStateData Id="Sequence_11" sap:VirtualizedContainerService.HintSize="923,573">
+      <sap2010:ViewStateData Id="Sequence_11" sap:VirtualizedContainerService.HintSize="963,573">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -678,9 +757,9 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="Throw_3" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_4" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_4" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_4" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_5" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_5" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_5" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="Assign_31" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="Assign_32" sap:VirtualizedContainerService.HintSize="242,60" />
@@ -692,15 +771,16 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="674,532" />
+      <sap2010:ViewStateData Id="If_6" sap:VirtualizedContainerService.HintSize="816,532" />
       <sap2010:ViewStateData Id="Throw_12" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_16" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_16" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_6" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_7" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_7" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_7" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_8" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_8" sap:VirtualizedContainerService.HintSize="816,208" />
+      <sap2010:ViewStateData Id="Assign_55" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="Assign_35" sap:VirtualizedContainerService.HintSize="242,60" />
-      <sap2010:ViewStateData Id="Assign_36" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="Assign_56" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="If_17" sap:VirtualizedContainerService.HintSize="509,208" />
       <sap2010:ViewStateData Id="Assign_37" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="Catch`1_4" sap:VirtualizedContainerService.HintSize="513,129">
@@ -719,12 +799,16 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_18" sap:VirtualizedContainerService.HintSize="674,919" />
+      <sap2010:ViewStateData Id="If_18" sap:VirtualizedContainerService.HintSize="816,919" />
+      <sap2010:ViewStateData Id="Assign_57" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="If_27" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_8" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_9" sap:VirtualizedContainerService.HintSize="674,208" />
+      <sap2010:ViewStateData Id="If_9" sap:VirtualizedContainerService.HintSize="816,208" />
       <sap2010:ViewStateData Id="Throw_9" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="If_10" sap:VirtualizedContainerService.HintSize="464,208" />
-      <sap2010:ViewStateData Id="If_11" sap:VirtualizedContainerService.HintSize="674,356" />
+      <sap2010:ViewStateData Id="Assign_51" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="If_11" sap:VirtualizedContainerService.HintSize="816,356" />
+      <sap2010:ViewStateData Id="Assign_52" sap:VirtualizedContainerService.HintSize="816,60" />
       <sap2010:ViewStateData Id="Throw_10" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="If_12" sap:VirtualizedContainerService.HintSize="467,208" />
       <sap2010:ViewStateData Id="Throw_11" sap:VirtualizedContainerService.HintSize="200,22" />
@@ -737,29 +821,26 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_13" sap:VirtualizedContainerService.HintSize="674,728" />
-      <sap2010:ViewStateData Id="Sequence_13" sap:VirtualizedContainerService.HintSize="696,4267">
+      <sap2010:ViewStateData Id="If_13" sap:VirtualizedContainerService.HintSize="816,728" />
+      <sap2010:ViewStateData Id="Sequence_13" sap:VirtualizedContainerService.HintSize="838,4615">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_14" sap:VirtualizedContainerService.HintSize="923,4415" />
+      <sap2010:ViewStateData Id="If_14" sap:VirtualizedContainerService.HintSize="963,4763" />
       <sap2010:ViewStateData Id="GetBuildDetail_1" sap:VirtualizedContainerService.HintSize="242,22" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_34" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Assign_28" sap:VirtualizedContainerService.HintSize="242,60" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_35" sap:VirtualizedContainerService.HintSize="242,22" />
-      <sap2010:ViewStateData Id="Sequence_2" sap:VirtualizedContainerService.HintSize="923,370">
+      <sap2010:ViewStateData Id="Sequence_2" sap:VirtualizedContainerService.HintSize="963,246">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="GetBuildDirectory_1" sap:VirtualizedContainerService.HintSize="905,22" />
-      <sap2010:ViewStateData Id="GetCleanCommandForBuild_1" sap:VirtualizedContainerService.HintSize="905,22" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_19" sap:VirtualizedContainerService.HintSize="234,22" />
+      <sap2010:ViewStateData Id="GetBuildDirectory_1" sap:VirtualizedContainerService.HintSize="963,22" />
+      <sap2010:ViewStateData Id="GetCleanCommandForBuild_1" sap:VirtualizedContainerService.HintSize="234,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_18" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_17" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="InvokeProcess_4" sap:VirtualizedContainerService.HintSize="234,270" />
@@ -779,22 +860,19 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="TryCatch_3" sap:VirtualizedContainerService.HintSize="418,870" />
-      <sap2010:ViewStateData Id="If_2" sap:VirtualizedContainerService.HintSize="923,1018" />
-      <sap2010:ViewStateData Id="GitPull_1" sap:VirtualizedContainerService.HintSize="923,22" />
-      <sap2010:ViewStateData Id="AssociateChanges_1" sap:VirtualizedContainerService.HintSize="923,22" />
+      <sap2010:ViewStateData Id="If_2" sap:VirtualizedContainerService.HintSize="963,1018" />
+      <sap2010:ViewStateData Id="GitPull_1" sap:VirtualizedContainerService.HintSize="963,22" />
+      <sap2010:ViewStateData Id="AssociateChanges_1" sap:VirtualizedContainerService.HintSize="963,22" />
       <sap2010:ViewStateData Id="FindMatchingFiles_1" sap:VirtualizedContainerService.HintSize="464,22" />
       <sap2010:ViewStateData Id="Throw_1" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="If_1" sap:VirtualizedContainerService.HintSize="464,208" />
       <sap2010:ViewStateData Id="Assign_29" sap:VirtualizedContainerService.HintSize="464,60" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_16" sap:VirtualizedContainerService.HintSize="464,22" />
       <sap2010:ViewStateData Id="ExecuteNPMInstall_1" sap:VirtualizedContainerService.HintSize="234,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_15" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_13" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="InvokeProcess_1" sap:VirtualizedContainerService.HintSize="234,270" />
       <sap2010:ViewStateData Id="ExecuteGruntTask_1" sap:VirtualizedContainerService.HintSize="234,22" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_2" sap:VirtualizedContainerService.HintSize="234,22" />
-      <sap2010:ViewStateData Id="WriteBuildMessage_25" sap:VirtualizedContainerService.HintSize="234,22" />
-      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="256,642">
+      <sap2010:ViewStateData Id="Sequence_9" sap:VirtualizedContainerService.HintSize="256,518">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -809,8 +887,8 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TryCatch_2" sap:VirtualizedContainerService.HintSize="464,1056" />
-      <sap2010:ViewStateData Id="Sequence_8" sap:VirtualizedContainerService.HintSize="486,1652">
+      <sap2010:ViewStateData Id="TryCatch_2" sap:VirtualizedContainerService.HintSize="464,932" />
+      <sap2010:ViewStateData Id="Sequence_8" sap:VirtualizedContainerService.HintSize="486,1466">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -834,33 +912,37 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TryCatch_1" sap:VirtualizedContainerService.HintSize="923,2239" />
+      <sap2010:ViewStateData Id="TryCatch_1" sap:VirtualizedContainerService.HintSize="963,2053" />
       <sap2010:ViewStateData Id="WriteBuildError_3" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_14" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="InvokeProcess_3" sap:VirtualizedContainerService.HintSize="923,270" />
-      <sap2010:ViewStateData Id="ZipSource_1" sap:VirtualizedContainerService.HintSize="242,22" />
+      <sap2010:ViewStateData Id="InvokeProcess_3" sap:VirtualizedContainerService.HintSize="963,270" />
+      <sap2010:ViewStateData Id="GetBuildDirectory_3" sap:VirtualizedContainerService.HintSize="242,22" />
+      <sap2010:ViewStateData Id="Assign_60" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="DeleteDirectory_3" sap:VirtualizedContainerService.HintSize="242,22" />
+      <sap2010:ViewStateData Id="CreateDirectory_3" sap:VirtualizedContainerService.HintSize="242,22" />
+      <sap2010:ViewStateData Id="CopyZIPUtil_1" sap:VirtualizedContainerService.HintSize="242,22" />
+      <sap2010:ViewStateData Id="Assign_58" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="Assign_59" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="WriteBuildError_4" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="InvokeProcess_18" sap:VirtualizedContainerService.HintSize="242,263" />
       <sap2010:ViewStateData Id="Assign_46" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="WriteBuildMessage_36" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Throw_21" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_37" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="InvokeProcess_12" sap:VirtualizedContainerService.HintSize="242,270" />
-      <sap2010:ViewStateData Id="Sequence_27" sap:VirtualizedContainerService.HintSize="758,618">
+      <sap2010:ViewStateData Id="Sequence_27" sap:VirtualizedContainerService.HintSize="758,1407">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="GetBuildDirectory_2" sap:VirtualizedContainerService.HintSize="242,22" />
-      <sap2010:ViewStateData Id="Assign_47" sap:VirtualizedContainerService.HintSize="242,60" />
-      <sap2010:ViewStateData Id="DeleteDirectory_2" sap:VirtualizedContainerService.HintSize="242,22" />
-      <sap2010:ViewStateData Id="CreateDirectory_2" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Assign_48" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="WriteBuildMessage_38" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Throw_22" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_39" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="InvokeProcess_13" sap:VirtualizedContainerService.HintSize="242,270" />
-      <sap2010:ViewStateData Id="Sequence_28" sap:VirtualizedContainerService.HintSize="736,842">
+      <sap2010:ViewStateData Id="Sequence_28" sap:VirtualizedContainerService.HintSize="736,556">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -879,12 +961,13 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FormPreandPostScript_1" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Assign_50" sap:VirtualizedContainerService.HintSize="242,60" />
       <sap2010:ViewStateData Id="WriteBuildMessage_42" sap:VirtualizedContainerService.HintSize="242,22" />
       <sap2010:ViewStateData Id="Throw_24" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="WriteBuildMessage_43" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="InvokeProcess_15" sap:VirtualizedContainerService.HintSize="242,270" />
-      <sap2010:ViewStateData Id="Sequence_30" sap:VirtualizedContainerService.HintSize="264,556">
+      <sap2010:ViewStateData Id="Sequence_30" sap:VirtualizedContainerService.HintSize="264,618">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -892,8 +975,8 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="Throw_25" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_23" sap:VirtualizedContainerService.HintSize="489,704" />
-      <sap2010:ViewStateData Id="Sequence_31" sap:VirtualizedContainerService.HintSize="511,1424">
+      <sap2010:ViewStateData Id="If_23" sap:VirtualizedContainerService.HintSize="489,766" />
+      <sap2010:ViewStateData Id="Sequence_31" sap:VirtualizedContainerService.HintSize="511,1486">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
@@ -901,22 +984,22 @@
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
       <sap2010:ViewStateData Id="Throw_26" sap:VirtualizedContainerService.HintSize="200,22" />
-      <sap2010:ViewStateData Id="If_24" sap:VirtualizedContainerService.HintSize="736,1572" />
-      <sap2010:ViewStateData Id="Sequence_32" sap:VirtualizedContainerService.HintSize="758,2578">
+      <sap2010:ViewStateData Id="If_24" sap:VirtualizedContainerService.HintSize="736,1634" />
+      <sap2010:ViewStateData Id="Sequence_32" sap:VirtualizedContainerService.HintSize="758,2354">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="Sequence_33" sap:VirtualizedContainerService.HintSize="780,3360">
+      <sap2010:ViewStateData Id="Sequence_33" sap:VirtualizedContainerService.HintSize="780,3925">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="If_25" sap:VirtualizedContainerService.HintSize="905,3508" />
+      <sap2010:ViewStateData Id="If_25" sap:VirtualizedContainerService.HintSize="905,4073" />
       <sap2010:ViewStateData Id="CreateBuildFailureBug_2" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="Rethrow_2" sap:VirtualizedContainerService.HintSize="200,22" />
       <sap2010:ViewStateData Id="Sequence_34" sap:VirtualizedContainerService.HintSize="222,208">
@@ -934,16 +1017,16 @@
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TryCatch_5" sap:VirtualizedContainerService.HintSize="923,4095" />
-      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="945,13654" />
-      <sap2010:ViewStateData Id="Sequence_6" sap:VirtualizedContainerService.HintSize="967,13840">
+      <sap2010:ViewStateData Id="TryCatch_5" sap:VirtualizedContainerService.HintSize="963,4660" />
+      <sap2010:ViewStateData Id="AgentScope_1" sap:VirtualizedContainerService.HintSize="985,14195" />
+      <sap2010:ViewStateData Id="Sequence_6" sap:VirtualizedContainerService.HintSize="1007,14381">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="IsExpanded">True</x:Boolean>
           </scg:Dictionary>
         </sap:WorkflowViewStateService.ViewState>
       </sap2010:ViewStateData>
-      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="1007,13920">
+      <sap2010:ViewStateData Id="TfsBuild.Process_1" sap:VirtualizedContainerService.HintSize="1047,14461">
         <sap:WorkflowViewStateService.ViewState>
           <scg:Dictionary x:TypeArguments="x:String, x:Object">
             <x:Boolean x:Key="ShouldExpandAll">True</x:Boolean>

@@ -81,6 +81,7 @@ E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.Custo
 E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.csproj.GenerateResource.Cache
 E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.dll
 E:\MS Project Grunt\Git1\BuildTemplate\BuildProcess\obj\Debug\BuildProcess.pdb
+C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\ZipSorce.bat
 C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\BuildProcess.dll
 C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\BuildProcess.pdb
 C:\Thiru Grunt\BuildTemplate\BuildProcess\bin\Newtonsoft.Json.dll

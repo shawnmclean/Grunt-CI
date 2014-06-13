@@ -19,49 +19,46 @@ using System.Activities;
 using System.IO;
 using System.Diagnostics;
 using System.Reflection;
-
+using System.IO.Compression;
 namespace GruntBuildProcess
 {
-    public sealed class ExecuteGruntTask : CodeActivity<string>
+    public sealed class CopyZIPUtil : CodeActivity<string>
     {
         public InArgument<string> BuildPath { get; set; }
-        const string GruntBAT = "ExecGrunt.bat";
-        string GruntExec = Path.GetTempFileName();
-
-        void p_OutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            // Collect the sort command output. 
-            if (!String.IsNullOrEmpty(e.Data))
-            {
-                GruntExec = GruntExec + e.Data + Environment.NewLine;
-            }
-        }
+        const string ZIPUtil = "7za920.zip";
+        const string ZipExe = "7za.exe";
 
         protected override string Execute(CodeActivityContext context)
         {
-
-            var GruntExe = BuildPath.Get(context) + "\\" + GruntBAT;
+            var ZIPExeFolderPath = BuildPath.Get(context) + "\\7zip\\";
             string[] Resourcenames = this.GetType().Assembly.GetManifestResourceNames();
-            GruntExec = "start...GruntExe:" + GruntExe;
+            var ZIPExePath = ZIPExeFolderPath;
 
             foreach (string rName in Resourcenames)
             {
-                if (rName.EndsWith(GruntBAT))
+                if (rName.EndsWith(ZIPUtil))
                 {
-                    GruntExec = GruntExec + "_" + rName + "_" + Assembly.GetExecutingAssembly().GetManifestResourceStream(rName).Length.ToString();
-                    Stream sRunGruntCli = Assembly.GetExecutingAssembly().GetManifestResourceStream(rName);//.CopyTo(File.OpenWrite(GruntExec));
-                    using (Stream fRunGruntCli = File.Create(GruntExe))
+                    if (!Directory.Exists(ZIPExeFolderPath))
+                        Directory.CreateDirectory(ZIPExeFolderPath);
+
+                    ZIPExePath = ZIPExeFolderPath + ZIPUtil;
+                    if (!File.Exists(ZIPExePath))
                     {
-                        sRunGruntCli.CopyTo(fRunGruntCli);
-                        fRunGruntCli.Close();
+                        Stream sZIPExe = Assembly.GetExecutingAssembly().GetManifestResourceStream(rName);//.CopyTo(File.OpenWrite(GruntExec));
+                        using (Stream fZIPExe = File.Create(ZIPExePath))
+                        {
+                            sZIPExe.CopyTo(fZIPExe);
+                            fZIPExe.Close();
+                        }
+                        ZipFile.ExtractToDirectory(ZIPExePath, ZIPExeFolderPath);
                     }
-                    return GruntExe;
+                    return ZIPExeFolderPath + ZipExe;
 
                 }
-            }
-            GruntExec = GruntExec + "...end";
 
-            return GruntExec;
+            }
+
+            return string.Empty;
 
         }
     }

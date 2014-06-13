@@ -112,6 +112,7 @@ E:\MS Project Grunt\Git1\BuildTemplate\GradleBuildTemplate\bin\Debug\Microsoft.W
 E:\MS Project Grunt\Git1\BuildTemplate\GradleBuildTemplate\obj\Debug\GradleBuildTemplate.csprojResolveAssemblyReference.cache
 E:\MS Project Grunt\Git1\BuildTemplate\GradleBuildTemplate\obj\Debug\GruntBuildTemplate.dll
 E:\MS Project Grunt\Git1\BuildTemplate\GradleBuildTemplate\obj\Debug\GruntBuildTemplate.pdb
+C:\Thiru Grunt\BuildTemplate\GradleBuildTemplate\bin\Debug\ZipSorce.bat
 C:\Thiru Grunt\BuildTemplate\GradleBuildTemplate\bin\Debug\GruntBuildTemplate.dll
 C:\Thiru Grunt\BuildTemplate\GradleBuildTemplate\bin\Debug\GruntBuildTemplate.pdb
 C:\Thiru Grunt\BuildTemplate\GradleBuildTemplate\bin\Debug\BuildProcess.dll

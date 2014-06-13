@@ -57,7 +57,8 @@
       <DependentUpon>PasswordDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="CustomEditors\PasswordEditor.cs" />
-    <Compile Include="ZipSource.cs" />
+    <Compile Include="CopyZipUtil.cs" />
+    <Compile Include="FormPreandPostScript.cs" />
     <Compile Include="GetCleanCommandForBuild.cs" />
     <Compile Include="ExecuteGruntTask.cs" />
     <Compile Include="ExecuteNPMInstall.cs" />
@@ -76,6 +77,20 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CleanBuild.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="zipper.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="unzip.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ZipSorce.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="7za920.zip" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
