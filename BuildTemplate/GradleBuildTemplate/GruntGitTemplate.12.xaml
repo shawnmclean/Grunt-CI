@@ -408,7 +408,7 @@
                   <Variable x:TypeArguments="x:Int32" Name="ExitCode" />
                 </Sequence.Variables>
                 <g:GetCleanCommandForBuild BuildPath="[buildDir]" DisplayName="Get Clean Command" sap2010:WorkflowViewState.IdRef="GetCleanCommandForBuild_1" Result="[CleanCommand]" />
-                <mtbwa:InvokeProcess Arguments="[&quot;&quot;&quot;&quot; + buildDir + &quot;&quot;&quot;&quot;]" DisplayName="Clean build folder " FileName="[CleanCommand]" sap2010:WorkflowViewState.IdRef="InvokeProcess_4" Result="[ExitCode]">
+                <mtbwa:InvokeProcess Arguments="[buildDir]" DisplayName="Clean build folder " FileName="[CleanCommand]" sap2010:WorkflowViewState.IdRef="InvokeProcess_4" Result="[ExitCode]">
                   <mtbwa:InvokeProcess.ErrorDataReceived>
                     <ActivityAction x:TypeArguments="x:String">
                       <ActivityAction.Argument>
@@ -426,11 +426,10 @@
                     </ActivityAction>
                   </mtbwa:InvokeProcess.OutputDataReceived>
                 </mtbwa:InvokeProcess>
-                <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If CleanBuild error">
+                <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If CleanBuild error" sap2010:WorkflowViewState.IdRef="If_28">
                   <If.Then>
                     <Throw Exception="[New Exception(&quot;Error cleaning build folder.&quot;)]" sap2010:WorkflowViewState.IdRef="Throw_27" />
                   </If.Then>
-                  <sap2010:WorkflowViewState.IdRef>If_28</sap2010:WorkflowViewState.IdRef>
                 </If>
               </Sequence>
             </TryCatch.Try>
@@ -489,14 +488,13 @@
                   </ActivityAction>
                 </mtbwa:InvokeProcess.OutputDataReceived>
               </mtbwa:InvokeProcess>
-              <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If NPM Error">
+              <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If NPM Error" sap2010:WorkflowViewState.IdRef="If_29">
                 <If.Then>
                   <Throw Exception="[New Exception(&quot;Error running NPM Install&quot;)]" sap2010:WorkflowViewState.IdRef="Throw_28" />
                 </If.Then>
-                <sap2010:WorkflowViewState.IdRef>If_29</sap2010:WorkflowViewState.IdRef>
               </If>
             </Sequence>
-            <Sequence DisplayName="Execute GruntJs">
+            <Sequence DisplayName="Execute GruntJs" sap2010:WorkflowViewState.IdRef="Sequence_35">
               <Sequence.Variables>
                 <Variable x:TypeArguments="x:Int32" Name="ExitCode" />
               </Sequence.Variables>
@@ -519,13 +517,11 @@
                   </ActivityAction>
                 </mtbwa:InvokeProcess.OutputDataReceived>
               </mtbwa:InvokeProcess>
-              <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If Grunt Error">
+              <If Condition="[ExitCode &lt;&gt; 0]" DisplayName="If Grunt Error" sap2010:WorkflowViewState.IdRef="If_30">
                 <If.Then>
                   <Throw Exception="[New Exception(&quot;Error running Grunt&quot;)]" sap2010:WorkflowViewState.IdRef="Throw_29" />
                 </If.Then>
-                <sap2010:WorkflowViewState.IdRef>If_30</sap2010:WorkflowViewState.IdRef>
               </If>
-              <sap2010:WorkflowViewState.IdRef>Sequence_35</sap2010:WorkflowViewState.IdRef>
             </Sequence>
           </Sequence>
         </TryCatch.Try>

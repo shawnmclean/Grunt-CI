@@ -59,7 +59,6 @@ namespace GruntBuildProcess
                         System.IO.Directory.CreateDirectory(dirPath);
                     }
 
-                    CleanExe = CleanExe.Replace("CleanBuild.bat", "zzzzCleanBuild.bat");
 
                     using (Stream fRunGruntCli = File.Create(CleanExe))
                     {
